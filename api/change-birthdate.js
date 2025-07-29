@@ -1,6 +1,15 @@
 const rp = require('request-promise');
 
 module.exports = async function handler(req, res) {
+  // Handle CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -27,10 +36,16 @@ module.exports = async function handler(req, res) {
         uri: endpoint,
         headers: {
           'Cookie': `.ROBLOSECURITY=${cookie}`,
-          'User-Agent': 'Mozilla/5.0',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
           'Content-Type': 'application/json',
+          'Accept': 'application/json, text/plain, */*',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Accept-Encoding': 'gzip, deflate, br',
           'Referer': 'https://www.roblox.com/',
-          'Origin': 'https://www.roblox.com'
+          'Origin': 'https://www.roblox.com',
+          'Sec-Fetch-Dest': 'empty',
+          'Sec-Fetch-Mode': 'cors',
+          'Sec-Fetch-Site': 'same-site'
         },
         body: {},
         json: true,
@@ -59,10 +74,16 @@ module.exports = async function handler(req, res) {
       headers: {
         'Cookie': `.ROBLOSECURITY=${cookie}`,
         'X-CSRF-Token': csrfToken,
-        'User-Agent': 'Mozilla/5.0',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         'Content-Type': 'application/json',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
         'Referer': 'https://www.roblox.com/',
-        'Origin': 'https://www.roblox.com'
+        'Origin': 'https://www.roblox.com',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site'
       },
       body: {
         birthDay: parseInt(birthDay),
