@@ -81,33 +81,110 @@ app.post('/change-birthdate', async (req, res) => {
       });
     }
 
-    // Now attempt to change birthdate with fresh CSRF token
-    const response = await rp({
-      method: 'POST',
-      uri: 'https://accountinformation.roblox.com/v1/birthdate',
-      headers: {
-        'Cookie': `.ROBLOSECURITY=${cookie}`,
-        'X-CSRF-Token': csrfToken,
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Content-Type': 'application/json',
-        'Referer': 'https://www.roblox.com/',
-        'Origin': 'https://www.roblox.com',
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-site'
-      },
-      body: {
-        birthDay: parseInt(birthDay),
-        birthMonth: parseInt(birthMonth),
-        birthYear: parseInt(birthYear),
-        password: password
-      },
-      json: true,
-      resolveWithFullResponse: true,
-      simple: false
-    });
+    // Function to make the birthdate change request
+    const makeBirthdateRequest = async (additionalHeaders = {}) => {
+      return await rp({
+        method: 'POST',
+        uri: 'https://accountinformation.roblox.com/v1/birthdate',
+        headers: {
+          'Cookie': `.ROBLOSECURITY=${cookie}`,
+          'X-CSRF-Token': csrfToken,
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Content-Type': 'application/json',
+          'Referer': 'https://www.roblox.com/',
+          'Origin': 'https://www.roblox.com',
+          'Accept': 'application/json, text/plain, */*',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Sec-Fetch-Dest': 'empty',
+          'Sec-Fetch-Mode': 'cors',
+          'Sec-Fetch-Site': 'same-site',
+          ...additionalHeaders
+        },
+        body: {
+          birthDay: parseInt(birthDay),
+          birthMonth: parseInt(birthMonth),
+          birthYear: parseInt(birthYear),
+          password: password
+        },
+        json: true,
+        resolveWithFullResponse: true,
+        simple: false
+      });
+    };
+
+    // Make initial request
+    let response = await makeBirthdateRequest();
+
+    // Check for challenge headers in 403 response
+    if (response.statusCode === 403) {
+      const challengeId = response.headers['rblx-challenge-id'];
+      const challengeType = response.headers['rblx-challenge-type'];
+      const challengeMetadata = response.headers['rblx-challenge-metadata'];
+
+      if (challengeId && challengeType && challengeMetadata) {
+        console.log('Challenge detected - attempting to solve via /v2/continue API');
+        console.log(`Challenge ID: ${challengeId}`);
+        console.log(`Challenge Type: ${challengeType}`);
+        console.log(`Challenge Metadata: ${challengeMetadata}`);
+
+        try {
+          // Call the /v2/continue API to solve the challenge
+          const continueResponse = await rp({
+            method: 'POST',
+            uri: 'https://apis.roblox.com/challenge/v1/continue',
+            headers: {
+              'Cookie': `.ROBLOSECURITY=${cookie}`,
+              'X-CSRF-Token': csrfToken,
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+              'Content-Type': 'application/json',
+              'Referer': 'https://www.roblox.com/',
+              'Origin': 'https://www.roblox.com',
+              'Accept': 'application/json, text/plain, */*',
+              'Accept-Language': 'en-US,en;q=0.9',
+              'Sec-Fetch-Dest': 'empty',
+              'Sec-Fetch-Mode': 'cors',
+              'Sec-Fetch-Site': 'same-site',
+              'rblx-challenge-id': challengeId,
+              'rblx-challenge-type': challengeType,
+              'rblx-challenge-metadata': challengeMetadata
+            },
+            body: {
+              challengeId: challengeId,
+              challengeType: challengeType,
+              challengeMetadata: challengeMetadata
+            },
+            json: true,
+            resolveWithFullResponse: true,
+            simple: false
+          });
+
+          console.log(`Continue API response status: ${continueResponse.statusCode}`);
+          console.log(`Continue API response:`, JSON.stringify(continueResponse.body, null, 2));
+
+          // If challenge was solved successfully, retry the original request
+          if (continueResponse.statusCode === 200) {
+            console.log('Challenge solved successfully - retrying birthdate change');
+            
+            // Extract any additional headers from the continue response that might be needed
+            const additionalHeaders = {};
+            if (continueResponse.headers['rblx-challenge-solution']) {
+              additionalHeaders['rblx-challenge-solution'] = continueResponse.headers['rblx-challenge-solution'];
+            }
+            if (continueResponse.headers['rblx-challenge-id']) {
+              additionalHeaders['rblx-challenge-id'] = continueResponse.headers['rblx-challenge-id'];
+            }
+
+            // Retry the original request with challenge solution headers
+            response = await makeBirthdateRequest(additionalHeaders);
+            console.log(`Retry response status: ${response.statusCode}`);
+          } else {
+            console.log('Challenge solving failed');
+          }
+        } catch (challengeError) {
+          console.error('Error solving challenge:', challengeError.message);
+        }
+      }
+    }
 
     console.log(`Birthdate change response status: ${response.statusCode}`);
     console.log(`Response headers:`, JSON.stringify(response.headers, null, 2));
